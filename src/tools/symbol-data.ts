@@ -1,0 +1,27 @@
+import { z } from "zod";
+import { valuerayRequest } from "../valueray.js";
+
+export const SymbolDataSchema = z.object({
+  symbol: z.string().describe("The financial symbol to retrieve data for (e.g., AAPL)"),
+  exchange: z.string().optional().describe("Optional exchange code"),
+});
+
+export const symbolDataHandler = async (params: unknown) => {
+  const { symbol, exchange } = SymbolDataSchema.parse(params);
+  
+  const queryParams: Record<string, string> = { symbol };
+  if (exchange) queryParams.exchange = exchange;
+
+  try {
+    const data = await valuerayRequest("/symbolData", queryParams);
+    return {
+      content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+      isError: false,
+    };
+  } catch (error) {
+    return {
+      content: [{ type: "text", text: error instanceof Error ? error.message : String(error) }],
+      isError: true,
+    };
+  }
+};
